@@ -411,7 +411,7 @@ function JeopardyStage({
         </p>
         {/* Clue uses the clean system font + generous line height for long,
             readable text; the answer gets the party's display font. */}
-        <p className="max-w-4xl text-3xl font-semibold leading-relaxed sm:text-5xl sm:leading-relaxed text-balance">
+        <p className="max-w-4xl text-3xl font-semibold leading-normal sm:text-5xl sm:leading-normal text-balance">
           {open.clue.clue}
         </p>
 
