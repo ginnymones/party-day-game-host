@@ -161,56 +161,60 @@ export default function MasterPage() {
   const setActiveGame = (gameId: string | null) =>
     updateParty(partyId, { activeGameId: gameId, mode: gameId ? "game" : "banner" });
 
-  const resetReveals = () => {
+  // Reveal state applies to the current Feud question / the whole Jeopardy board.
+  const setReveals = (revealed: boolean) => {
     if (!activeGame) return;
     const d = activeGame.data;
-    let next: GameData = d;
     if (d.type === "feud") {
-      next = { ...d, answers: d.answers.map((a) => ({ ...a, revealed: false })) };
+      const idx = Math.min(d.currentIndex, Math.max(d.questions.length - 1, 0));
+      onReveal({
+        ...d,
+        questions: d.questions.map((q, i) =>
+          i === idx
+            ? { ...q, answers: q.answers.map((a) => ({ ...a, revealed })) }
+            : q
+        ),
+      });
     } else if (d.type === "jeopardy") {
-      next = {
+      onReveal({
         ...d,
         categories: d.categories.map((c) => ({
           ...c,
-          clues: c.clues.map((q) => ({ ...q, revealed: false })),
+          clues: c.clues.map((q) => ({ ...q, revealed })),
         })),
-      };
+      });
     }
-    onReveal(next);
+  };
+
+  const resetReveals = () => {
+    setReveals(false);
     toast("Reveals reset", "info");
   };
+  const revealAll = () => setReveals(true);
 
-  const revealAll = () => {
+  // Step through Bring Me challenges or Feud questions.
+  const stepIndex = (dir: 1 | -1) => {
     if (!activeGame) return;
     const d = activeGame.data;
-    let next: GameData = d;
-    if (d.type === "feud") {
-      next = { ...d, answers: d.answers.map((a) => ({ ...a, revealed: true })) };
-    } else if (d.type === "jeopardy") {
-      next = {
-        ...d,
-        categories: d.categories.map((c) => ({
-          ...c,
-          clues: c.clues.map((q) => ({ ...q, revealed: true })),
-        })),
-      };
+    if (d.type === "bringme") {
+      const n = Math.min(
+        Math.max(d.currentIndex + dir, 0),
+        Math.max(d.challenges.length - 1, 0)
+      );
+      onReveal({ ...d, currentIndex: n });
+    } else if (d.type === "feud") {
+      const n = Math.min(
+        Math.max(d.currentIndex + dir, 0),
+        Math.max(d.questions.length - 1, 0)
+      );
+      onReveal({ ...d, currentIndex: n });
     }
-    onReveal(next);
   };
 
-  const stepChallenge = (dir: 1 | -1) => {
-    if (!activeGame || activeGame.data.type !== "bringme") return;
-    const d = activeGame.data;
-    const nextIndex = Math.min(
-      Math.max(d.currentIndex + dir, 0),
-      Math.max(d.challenges.length - 1, 0)
-    );
-    onReveal({ ...d, currentIndex: nextIndex });
-  };
-
-  const isBringMe = activeGame?.data.type === "bringme";
-  const isRevealGame =
-    activeGame?.data.type === "feud" || activeGame?.data.type === "jeopardy";
+  const gameType = activeGame?.data.type;
+  const isBringMe = gameType === "bringme";
+  const isFeud = gameType === "feud";
+  const isRevealGame = isFeud || gameType === "jeopardy";
 
   return (
     <div className="min-h-dvh bg-background">
@@ -298,11 +302,21 @@ export default function MasterPage() {
             <div className="flex flex-wrap gap-2 border-t border-card-border pt-3">
               {isBringMe && (
                 <>
-                  <Button size="sm" variant="secondary" onClick={() => stepChallenge(-1)}>
+                  <Button size="sm" variant="secondary" onClick={() => stepIndex(-1)}>
                     ← Previous
                   </Button>
-                  <Button size="sm" onClick={() => stepChallenge(1)}>
+                  <Button size="sm" onClick={() => stepIndex(1)}>
                     Next challenge →
+                  </Button>
+                </>
+              )}
+              {isFeud && (
+                <>
+                  <Button size="sm" variant="secondary" onClick={() => stepIndex(-1)}>
+                    ← Previous question
+                  </Button>
+                  <Button size="sm" onClick={() => stepIndex(1)}>
+                    Next question →
                   </Button>
                 </>
               )}

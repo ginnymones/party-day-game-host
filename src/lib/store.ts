@@ -10,9 +10,38 @@ import type {
   Game,
   GameData,
   GameType,
+  LegacyFeudData,
   Party,
   ColorSchemeId,
 } from "./types";
+
+/**
+ * Migrate legacy game payloads to the current shape on read. Older Family Feud
+ * games stored a single { question, answers }; they now hold a list of
+ * questions. This keeps existing (and cloud-synced) games working without a
+ * manual migration.
+ */
+export function normalizeGameData(data: GameData): GameData {
+  if (data.type === "feud" && !Array.isArray((data as { questions?: unknown }).questions)) {
+    const legacy = data as unknown as LegacyFeudData;
+    return {
+      type: "feud",
+      currentIndex: 0,
+      questions: [
+        {
+          id: newId(),
+          question: legacy.question ?? "",
+          answers: legacy.answers ?? [],
+        },
+      ],
+    };
+  }
+  return data;
+}
+
+function normalizeGame(game: Game): Game {
+  return { ...game, data: normalizeGameData(game.data) };
+}
 
 /** Words used to build friendly, readable join codes like "SUNSET-42". */
 const CODE_WORDS = [
@@ -153,13 +182,30 @@ export function defaultGameData(type: GameType): GameData {
     case "feud":
       return {
         type: "feud",
-        question: "Name something people always forget to pack for a trip",
-        answers: [
-          { id: newId(), text: "Toothbrush", points: 32, revealed: false },
-          { id: newId(), text: "Phone charger", points: 27, revealed: false },
-          { id: newId(), text: "Underwear", points: 18, revealed: false },
-          { id: newId(), text: "Sunscreen", points: 13, revealed: false },
-          { id: newId(), text: "Passport", points: 10, revealed: false },
+        currentIndex: 0,
+        questions: [
+          {
+            id: newId(),
+            question: "Name something people always forget to pack for a trip",
+            answers: [
+              { id: newId(), text: "Toothbrush", points: 32, revealed: false },
+              { id: newId(), text: "Phone charger", points: 27, revealed: false },
+              { id: newId(), text: "Underwear", points: 18, revealed: false },
+              { id: newId(), text: "Sunscreen", points: 13, revealed: false },
+              { id: newId(), text: "Passport", points: 10, revealed: false },
+            ],
+          },
+          {
+            id: newId(),
+            question: "Name a food people eat at birthday parties",
+            answers: [
+              { id: newId(), text: "Cake", points: 45, revealed: false },
+              { id: newId(), text: "Pizza", points: 24, revealed: false },
+              { id: newId(), text: "Ice cream", points: 16, revealed: false },
+              { id: newId(), text: "Chips", points: 9, revealed: false },
+              { id: newId(), text: "Hot dogs", points: 6, revealed: false },
+            ],
+          },
         ],
       };
     case "jeopardy":
@@ -218,12 +264,13 @@ export async function addGame(
 }
 
 export async function getGame(id: string): Promise<Game | undefined> {
-  return db.games.get(id);
+  const game = await db.games.get(id);
+  return game ? normalizeGame(game) : undefined;
 }
 
 export async function listGames(partyId: string): Promise<Game[]> {
   const rows = await db.games.where("partyId").equals(partyId).toArray();
-  return rows.sort((a, b) => a.order - b.order);
+  return rows.sort((a, b) => a.order - b.order).map(normalizeGame);
 }
 
 export async function saveGame(game: Game): Promise<void> {

@@ -85,7 +85,8 @@ export default function PlayPage() {
   const prompt = (() => {
     const g = state?.activeGame;
     if (!g || state?.party.mode !== "game") return null;
-    if (g.data.type === "feud") return g.data.question;
+    if (g.data.type === "feud")
+      return g.data.questions[g.data.currentIndex]?.question ?? null;
     if (g.data.type === "bringme")
       return g.data.challenges[g.data.currentIndex]?.text ?? null;
     return "Jeopardy is in play — answer when the host calls on you.";

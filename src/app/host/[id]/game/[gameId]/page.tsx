@@ -197,81 +197,154 @@ function FeudEditor({
   data: Extract<GameData, { type: "feud" }>;
   onChange: (d: GameData) => void;
 }) {
-  const updateAnswers = (answers: typeof data.answers) =>
-    onChange({ ...data, answers });
+  const updateQuestions = (questions: typeof data.questions) =>
+    onChange({ ...data, questions });
 
   return (
-    <Card className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-text-primary">Question &amp; answers</h2>
+    <div className="space-y-4">
+      <Card>
+        <h2 className="text-lg font-semibold text-text-primary">Questions</h2>
         <p className="text-sm text-text-muted">
-          List answers with their point values. Tap a card during play to reveal it.
+          Add as many questions as you like — during play you step through them
+          one at a time. Each has ranked answers you reveal by tapping.
         </p>
-      </div>
-      <Textarea
-        label="Question"
-        value={data.question}
-        onChange={(e) => onChange({ ...data, question: e.target.value })}
-      />
-      <ul className="space-y-2">
-        {data.answers.map((a, i) => (
-          <li key={a.id} className="flex items-start gap-2">
-            <div className="flex-1">
-              <Input
-                aria-label={`Answer ${i + 1} text`}
-                value={a.text}
-                placeholder="Answer"
-                onChange={(e) =>
-                  updateAnswers(
-                    data.answers.map((x) =>
-                      x.id === a.id ? { ...x, text: e.target.value } : x
-                    )
-                  )
-                }
-              />
-            </div>
-            <div className="w-24">
-              <Input
-                aria-label={`Answer ${i + 1} points`}
-                type="number"
-                min={0}
-                value={a.points}
-                onChange={(e) =>
-                  updateAnswers(
-                    data.answers.map((x) =>
-                      x.id === a.id
-                        ? { ...x, points: Number(e.target.value) || 0 }
-                        : x
-                    )
-                  )
-                }
-              />
-            </div>
+      </Card>
+
+      {data.questions.map((q, qi) => (
+        <Card key={q.id} className="space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <span className="mt-1 rounded-full bg-accent/12 px-2.5 py-0.5 text-xs font-medium text-accent">
+              Question {qi + 1}
+            </span>
             <Button
               variant="ghost"
               size="sm"
-              className="mt-0.5"
-              onClick={() => updateAnswers(data.answers.filter((x) => x.id !== a.id))}
-              aria-label={`Remove answer ${i + 1}`}
+              onClick={() =>
+                updateQuestions(data.questions.filter((x) => x.id !== q.id))
+              }
+              aria-label={`Remove question ${qi + 1}`}
             >
-              Remove
+              Remove question
             </Button>
-          </li>
-        ))}
-      </ul>
+          </div>
+
+          <Textarea
+            label="Question"
+            value={q.question}
+            onChange={(e) =>
+              updateQuestions(
+                data.questions.map((x) =>
+                  x.id === q.id ? { ...x, question: e.target.value } : x
+                )
+              )
+            }
+          />
+
+          <ul className="space-y-2">
+            {q.answers.map((a, i) => (
+              <li key={a.id} className="flex items-start gap-2">
+                <div className="flex-1">
+                  <Input
+                    aria-label={`Question ${qi + 1} answer ${i + 1} text`}
+                    value={a.text}
+                    placeholder="Answer"
+                    onChange={(e) =>
+                      updateQuestions(
+                        data.questions.map((x) =>
+                          x.id === q.id
+                            ? {
+                                ...x,
+                                answers: x.answers.map((y) =>
+                                  y.id === a.id ? { ...y, text: e.target.value } : y
+                                ),
+                              }
+                            : x
+                        )
+                      )
+                    }
+                  />
+                </div>
+                <div className="w-24">
+                  <Input
+                    aria-label={`Question ${qi + 1} answer ${i + 1} points`}
+                    type="number"
+                    min={0}
+                    value={a.points}
+                    onChange={(e) =>
+                      updateQuestions(
+                        data.questions.map((x) =>
+                          x.id === q.id
+                            ? {
+                                ...x,
+                                answers: x.answers.map((y) =>
+                                  y.id === a.id
+                                    ? { ...y, points: Number(e.target.value) || 0 }
+                                    : y
+                                ),
+                              }
+                            : x
+                        )
+                      )
+                    }
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-0.5"
+                  onClick={() =>
+                    updateQuestions(
+                      data.questions.map((x) =>
+                        x.id === q.id
+                          ? { ...x, answers: x.answers.filter((y) => y.id !== a.id) }
+                          : x
+                      )
+                    )
+                  }
+                  aria-label={`Remove answer ${i + 1}`}
+                >
+                  Remove
+                </Button>
+              </li>
+            ))}
+          </ul>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              updateQuestions(
+                data.questions.map((x) =>
+                  x.id === q.id
+                    ? {
+                        ...x,
+                        answers: [
+                          ...x.answers,
+                          { id: newId(), text: "", points: 0, revealed: false },
+                        ],
+                      }
+                    : x
+                )
+              )
+            }
+          >
+            + Add answer
+          </Button>
+        </Card>
+      ))}
+
       <Button
         variant="secondary"
-        size="sm"
         onClick={() =>
-          updateAnswers([
-            ...data.answers,
-            { id: newId(), text: "", points: 0, revealed: false },
+          updateQuestions([
+            ...data.questions,
+            { id: newId(), question: "", answers: [] },
           ])
         }
       >
-        + Add answer
+        + Add question
       </Button>
-    </Card>
+    </div>
   );
 }
 

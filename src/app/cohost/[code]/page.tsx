@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRequireAuth } from "@/components/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
-import { Card, Spinner } from "@/components/ui";
+import { Button, Card, Spinner } from "@/components/ui";
 import { Stage } from "@/components/stage/Stage";
 import { openCohostChannel } from "@/lib/sync";
 import { isCloudConfigured } from "@/lib/cloud";
@@ -55,13 +55,58 @@ export default function CohostPage() {
     send({ kind: "party", from, patch: { mode } });
   const setActiveGame = (gameId: string) =>
     send({ kind: "party", from, patch: { activeGameId: gameId, mode: "game" } });
+  const activeGame = state?.activeGame ?? null;
+
   const onReveal = (next: GameData) => {
-    if (state?.activeGame) send({ kind: "game", from, gameId: state.activeGame.id, data: next });
+    if (activeGame) send({ kind: "game", from, gameId: activeGame.id, data: next });
   };
 
-  const activeGame = state?.activeGame ?? null;
-  const isRevealGame =
-    activeGame?.data.type === "feud" || activeGame?.data.type === "jeopardy";
+  const stepIndex = (dir: 1 | -1) => {
+    if (!activeGame) return;
+    const d = activeGame.data;
+    if (d.type === "bringme") {
+      const n = Math.min(
+        Math.max(d.currentIndex + dir, 0),
+        Math.max(d.challenges.length - 1, 0)
+      );
+      onReveal({ ...d, currentIndex: n });
+    } else if (d.type === "feud") {
+      const n = Math.min(
+        Math.max(d.currentIndex + dir, 0),
+        Math.max(d.questions.length - 1, 0)
+      );
+      onReveal({ ...d, currentIndex: n });
+    }
+  };
+
+  const setReveals = (revealed: boolean) => {
+    if (!activeGame) return;
+    const d = activeGame.data;
+    if (d.type === "feud") {
+      const idx = Math.min(d.currentIndex, Math.max(d.questions.length - 1, 0));
+      onReveal({
+        ...d,
+        questions: d.questions.map((q, i) =>
+          i === idx
+            ? { ...q, answers: q.answers.map((a) => ({ ...a, revealed })) }
+            : q
+        ),
+      });
+    } else if (d.type === "jeopardy") {
+      onReveal({
+        ...d,
+        categories: d.categories.map((c) => ({
+          ...c,
+          clues: c.clues.map((q) => ({ ...q, revealed })),
+        })),
+      });
+    }
+  };
+
+  const gameType = activeGame?.data.type;
+  const isBringMe = gameType === "bringme";
+  const isFeud = gameType === "feud";
+  const isRevealGame = isFeud || gameType === "jeopardy";
 
   return (
     <div className="min-h-dvh bg-background">
@@ -146,6 +191,41 @@ export default function CohostPage() {
                   </div>
                 )}
               </div>
+
+              {state.party.mode === "game" && activeGame && (
+                <div className="flex flex-wrap gap-2 border-t border-card-border pt-3">
+                  {isBringMe && (
+                    <>
+                      <Button size="sm" variant="secondary" onClick={() => stepIndex(-1)}>
+                        ← Previous
+                      </Button>
+                      <Button size="sm" onClick={() => stepIndex(1)}>
+                        Next challenge →
+                      </Button>
+                    </>
+                  )}
+                  {isFeud && (
+                    <>
+                      <Button size="sm" variant="secondary" onClick={() => stepIndex(-1)}>
+                        ← Previous question
+                      </Button>
+                      <Button size="sm" onClick={() => stepIndex(1)}>
+                        Next question →
+                      </Button>
+                    </>
+                  )}
+                  {isRevealGame && (
+                    <>
+                      <Button size="sm" variant="secondary" onClick={() => setReveals(false)}>
+                        Reset reveals
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setReveals(true)}>
+                        Reveal all
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
             </Card>
 
             <Card className="overflow-hidden p-0">

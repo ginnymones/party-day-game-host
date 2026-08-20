@@ -41,6 +41,12 @@ export interface FeudAnswer {
   revealed: boolean;
 }
 
+export interface FeudQuestion {
+  id: string;
+  question: string;
+  answers: FeudAnswer[];
+}
+
 export interface BringMeChallenge {
   id: string;
   text: string;
@@ -65,8 +71,15 @@ export interface JeopardyCategory {
 /** Discriminated union of the per-type game payload. */
 export type GameData =
   | { type: "bringme"; challenges: BringMeChallenge[]; currentIndex: number }
-  | { type: "feud"; question: string; answers: FeudAnswer[] }
+  | { type: "feud"; questions: FeudQuestion[]; currentIndex: number }
   | { type: "jeopardy"; categories: JeopardyCategory[] };
+
+/** Legacy single-question Feud shape, migrated on read (see store.ts). */
+export interface LegacyFeudData {
+  type: "feud";
+  question?: string;
+  answers?: FeudAnswer[];
+}
 
 export interface Game {
   id: string;

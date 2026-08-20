@@ -141,23 +141,39 @@ function FeudStage({
   interactive: boolean;
   onReveal?: (next: GameData) => void;
 }) {
+  const index = Math.min(data.currentIndex, Math.max(data.questions.length - 1, 0));
+  const current = data.questions[index];
+
   const toggle = (id: string) => {
-    if (!interactive || !onReveal) return;
+    if (!interactive || !onReveal || !current) return;
     onReveal({
       ...data,
-      answers: data.answers.map((a) =>
-        a.id === id ? { ...a, revealed: !a.revealed } : a
+      questions: data.questions.map((q) =>
+        q.id === current.id
+          ? {
+              ...q,
+              answers: q.answers.map((a) =>
+                a.id === id ? { ...a, revealed: !a.revealed } : a
+              ),
+            }
+          : q
       ),
     });
   };
 
+  if (!current) {
+    return (
+      <p className="text-center text-2xl font-semibold">No questions yet</p>
+    );
+  }
+
   return (
     <div className="animate-fade-in">
       <h2 className="mb-8 text-center text-2xl font-semibold sm:text-4xl text-balance">
-        {data.question}
+        {current.question}
       </h2>
       <ul className="mx-auto grid max-w-3xl gap-3">
-        {data.answers.map((a, i) => {
+        {current.answers.map((a, i) => {
           const cardClass = cn(
             "flex w-full items-center justify-between gap-4 rounded-xl px-5 py-4 text-left text-xl font-semibold sm:text-2xl",
             "border-2 transition-all",
@@ -195,6 +211,11 @@ function FeudStage({
           );
         })}
       </ul>
+      {data.questions.length > 1 && (
+        <p className="mt-8 text-center text-sm opacity-60">
+          Question {index + 1} of {data.questions.length}
+        </p>
+      )}
     </div>
   );
 }
