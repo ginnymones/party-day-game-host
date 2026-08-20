@@ -8,7 +8,56 @@ import { Button, Card, Input, Spinner, Textarea } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { getGame, saveGame, defaultGameTitle } from "@/lib/store";
 import { newId } from "@/lib/crypto";
+import { cn } from "@/lib/cn";
 import type { Game, GameData } from "@/lib/types";
+
+/** Return a copy of `arr` with the item at `index` moved one step in `dir`. */
+function move<T>(arr: T[], index: number, dir: -1 | 1): T[] {
+  const target = index + dir;
+  if (target < 0 || target >= arr.length) return arr;
+  const copy = arr.slice();
+  const [item] = copy.splice(index, 1);
+  copy.splice(target, 0, item);
+  return copy;
+}
+
+/** Accessible up/down buttons for reordering a list item. */
+function ReorderControls({
+  index,
+  count,
+  onMove,
+  label,
+}: {
+  index: number;
+  count: number;
+  onMove: (dir: -1 | 1) => void;
+  label: string;
+}) {
+  const btn =
+    "grid h-6 w-6 place-items-center rounded-md border border-card-border bg-card text-text-primary cursor-pointer hover:bg-background disabled:cursor-not-allowed disabled:opacity-40";
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={() => onMove(-1)}
+        disabled={index === 0}
+        aria-label={`Move ${label} up`}
+        className={cn(btn)}
+      >
+        <span aria-hidden="true">↑</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onMove(1)}
+        disabled={index === count - 1}
+        aria-label={`Move ${label} down`}
+        className={cn(btn)}
+      >
+        <span aria-hidden="true">↓</span>
+      </button>
+    </div>
+  );
+}
 
 export default function GameEditorPage() {
   const { loading, authorized } = useRequireAuth();
@@ -161,6 +210,12 @@ function BringMeEditor({
                 }
               />
             </div>
+            <ReorderControls
+              index={i}
+              count={data.challenges.length}
+              label={`challenge ${i + 1}`}
+              onMove={(dir) => update(move(data.challenges, i, dir))}
+            />
             <Button
               variant="ghost"
               size="sm"
@@ -216,16 +271,24 @@ function FeudEditor({
             <span className="mt-1 rounded-full bg-accent/12 px-2.5 py-0.5 text-xs font-medium text-accent">
               Question {qi + 1}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                updateQuestions(data.questions.filter((x) => x.id !== q.id))
-              }
-              aria-label={`Remove question ${qi + 1}`}
-            >
-              Remove question
-            </Button>
+            <div className="flex items-center gap-2">
+              <ReorderControls
+                index={qi}
+                count={data.questions.length}
+                label={`question ${qi + 1}`}
+                onMove={(dir) => updateQuestions(move(data.questions, qi, dir))}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  updateQuestions(data.questions.filter((x) => x.id !== q.id))
+                }
+                aria-label={`Remove question ${qi + 1}`}
+              >
+                Remove question
+              </Button>
+            </div>
           </div>
 
           <Textarea
@@ -380,6 +443,12 @@ function JeopardyEditor({
                 }
               />
             </div>
+            <ReorderControls
+              index={ci}
+              count={data.categories.length}
+              label={`category ${ci + 1}`}
+              onMove={(dir) => updateCategories(move(data.categories, ci, dir))}
+            />
             <Button
               variant="ghost"
               size="sm"
@@ -419,22 +488,37 @@ function JeopardyEditor({
                       }
                     />
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto"
-                    onClick={() =>
-                      updateCategories(
-                        data.categories.map((c) =>
-                          c.id === cat.id
-                            ? { ...c, clues: c.clues.filter((q) => q.id !== clue.id) }
-                            : c
+                  <div className="ml-auto flex items-center gap-2">
+                    <ReorderControls
+                      index={qi}
+                      count={cat.clues.length}
+                      label={`clue ${qi + 1}`}
+                      onMove={(dir) =>
+                        updateCategories(
+                          data.categories.map((c) =>
+                            c.id === cat.id
+                              ? { ...c, clues: move(c.clues, qi, dir) }
+                              : c
+                          )
                         )
-                      )
-                    }
-                  >
-                    Remove clue
-                  </Button>
+                      }
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        updateCategories(
+                          data.categories.map((c) =>
+                            c.id === cat.id
+                              ? { ...c, clues: c.clues.filter((q) => q.id !== clue.id) }
+                              : c
+                          )
+                        )
+                      }
+                    >
+                      Remove clue
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Textarea
