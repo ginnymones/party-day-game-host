@@ -14,6 +14,24 @@
 --   migrate to Supabase Auth and swap the policies to use auth.uid().
 -- =============================================================================
 
+-- Accounts: username + profile live here so an account works on any device.
+-- The primary key IS the secret owner_key (derived from username + PIN), so
+-- knowing the row implies knowing the credentials. Usernames are globally
+-- unique via the index below, enforced by the DB even though RLS hides other
+-- rows. No PIN or PIN hash is stored — the owner_key doubles as the credential.
+create table if not exists public.accounts (
+  owner_key text primary key,
+  username text not null,
+  display_name text not null,
+  role text not null,
+  created_at bigint not null
+);
+
+create unique index if not exists accounts_username_key
+  on public.accounts (lower(username));
+
+alter table public.accounts enable row level security;
+
 create table if not exists public.parties (
   id uuid primary key,
   owner_key text not null,
@@ -49,6 +67,27 @@ as $$
     ''
   );
 $$;
+
+-- Accounts policies ----------------------------------------------------------
+-- A client can only see/insert/update the single row matching the owner_key it
+-- presents. Username uniqueness is still enforced globally by the index above,
+-- so signups with a taken username fail with a conflict even though the client
+-- can't read the existing row.
+drop policy if exists accounts_select on public.accounts;
+create policy accounts_select on public.accounts
+  for select to anon, authenticated
+  using (owner_key = public.request_owner_key());
+
+drop policy if exists accounts_insert on public.accounts;
+create policy accounts_insert on public.accounts
+  for insert to anon, authenticated
+  with check (owner_key = public.request_owner_key());
+
+drop policy if exists accounts_update on public.accounts;
+create policy accounts_update on public.accounts
+  for update to anon, authenticated
+  using (owner_key = public.request_owner_key())
+  with check (owner_key = public.request_owner_key());
 
 -- Parties policies -----------------------------------------------------------
 drop policy if exists parties_select on public.parties;

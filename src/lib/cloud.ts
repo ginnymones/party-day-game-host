@@ -49,6 +49,76 @@ function getClient(): SupabaseClient | null {
   return client;
 }
 
+/**
+ * Create a one-off client scoped to a specific owner key. Used during
+ * signup/login, before a session (and the module-level ownerKey) exists.
+ */
+function clientWithKey(key: string): SupabaseClient | null {
+  if (!isCloudConfigured()) return null;
+  return createClient(url as string, anon as string, {
+    auth: { persistSession: false },
+    global: { headers: { "x-owner-key": key } },
+  });
+}
+
+export interface CloudAccount {
+  username: string;
+  displayName: string;
+  role: string;
+}
+
+/** Look up the account for a derived owner key. Returns null if none exists. */
+export async function cloudFindAccount(
+  ownerKeyValue: string
+): Promise<CloudAccount | null> {
+  const c = clientWithKey(ownerKeyValue);
+  if (!c) return null;
+  const { data, error } = await c
+    .from("accounts")
+    .select("username, display_name, role")
+    .eq("owner_key", ownerKeyValue)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    username: data.username as string,
+    displayName: data.display_name as string,
+    role: data.role as string,
+  };
+}
+
+export type CloudSignupResult =
+  | { ok: true }
+  | { ok: false; conflict?: boolean; error: string };
+
+/** Insert a new account. Fails with `conflict` when the username is taken. */
+export async function cloudCreateAccount(
+  ownerKeyValue: string,
+  input: { username: string; displayName: string; role: string }
+): Promise<CloudSignupResult> {
+  const c = clientWithKey(ownerKeyValue);
+  if (!c) return { ok: false, error: "Cloud is not configured." };
+  const { error } = await c.from("accounts").insert({
+    owner_key: ownerKeyValue,
+    username: input.username.toLowerCase(),
+    display_name: input.displayName,
+    role: input.role,
+    created_at: Date.now(),
+  });
+  if (error) {
+    // 23505 = unique_violation (username already registered).
+    if ((error as { code?: string }).code === "23505") {
+      return { ok: false, conflict: true, error: "That username is already taken." };
+    }
+    return { ok: false, error: "Could not create the account. Please try again." };
+  }
+  return { ok: true };
+}
+
+export function isOnline(): boolean {
+  return online();
+}
+
 // ---------------------------------------------------------------------------
 // Status (for a small UI indicator)
 // ---------------------------------------------------------------------------

@@ -10,14 +10,27 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { ensureSeeded } from "@/lib/db";
-import { getSession, login as doLogin, logout as doLogout } from "@/lib/auth";
+import {
+  getSession,
+  login as doLogin,
+  logout as doLogout,
+  signup as doSignup,
+} from "@/lib/auth";
 import { setOwnerKey, syncNow } from "@/lib/cloud";
 import type { Role, Session } from "@/lib/types";
+
+interface SignupInput {
+  username: string;
+  pin: string;
+  displayName: string;
+  role: Role;
+}
 
 interface AuthContextValue {
   session: Session | null;
   loading: boolean;
   login: (username: string, pin: string) => ReturnType<typeof doLogin>;
+  signup: (input: SignupInput) => ReturnType<typeof doSignup>;
   logout: () => Promise<void>;
 }
 
@@ -65,6 +78,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, []);
 
+  const signup = useCallback(async (input: SignupInput) => {
+    const result = await doSignup(input);
+    if (result.ok) {
+      setSession(result.session);
+      setOwnerKey(result.session.ownerKey);
+      void syncNow();
+    }
+    return result;
+  }, []);
+
   const logout = useCallback(async () => {
     await doLogout();
     setSession(null);
@@ -72,8 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, loading, login, logout }),
-    [session, loading, login, logout]
+    () => ({ session, loading, login, signup, logout }),
+    [session, loading, login, signup, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
