@@ -89,7 +89,7 @@ export default function AudiencePage() {
     session && (state.party.cohostUsernames ?? []).includes(session.username);
 
   return (
-    <main className="relative min-h-dvh">
+    <main className="relative flex min-h-dvh flex-col">
       {canCohost && (
         <Link
           href={`/cohost/${code}`}
@@ -98,7 +98,7 @@ export default function AudiencePage() {
           Open co-host controls →
         </Link>
       )}
-      <Stage party={state.party} game={state.activeGame} className="min-h-dvh" />
+      <Stage party={state.party} game={state.activeGame} className="flex-1" />
     </main>
   );
 }

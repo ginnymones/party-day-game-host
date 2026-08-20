@@ -342,12 +342,13 @@ export default function MasterPage() {
                 ? "Tap cards to reveal — this is what the audience sees"
                 : "Live preview — this is what the audience sees"}
             </div>
-            <div className="min-h-[420px]">
+            <div className="flex min-h-[420px]">
               <Stage
                 party={party}
                 game={activeGame ?? null}
                 interactive={party.mode === "game" && isRevealGame}
                 onReveal={onReveal}
+                className="flex-1"
               />
             </div>
           </Card>

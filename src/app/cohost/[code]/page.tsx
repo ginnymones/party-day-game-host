@@ -234,12 +234,13 @@ export default function CohostPage() {
                   ? "Tap cards to reveal — mirrors the audience screen"
                   : "Live preview — mirrors the audience screen"}
               </div>
-              <div className="min-h-[420px]">
+              <div className="flex min-h-[420px]">
                 <Stage
                   party={state.party}
                   game={activeGame}
                   interactive={state.party.mode === "game" && isRevealGame}
                   onReveal={onReveal}
+                  className="flex-1"
                 />
               </div>
             </Card>

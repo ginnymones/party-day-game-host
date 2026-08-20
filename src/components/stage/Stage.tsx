@@ -32,7 +32,7 @@ export function Stage({
     <div
       style={schemeStyle(party.colorScheme)}
       className={cn(
-        "relative flex min-h-full w-full flex-col items-center justify-center overflow-hidden p-6 sm:p-10",
+        "relative flex w-full flex-col items-center justify-center overflow-hidden p-6 sm:p-10",
         className
       )}
     >
