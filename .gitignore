@@ -34,6 +34,9 @@ yarn-error.log*
 # data exports
 *.csv
 
+# raw font source downloads (the built woff2 in public/fonts is committed)
+/Google_Sans
+
 # vercel
 .vercel
 
