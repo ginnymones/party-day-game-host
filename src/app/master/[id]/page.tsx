@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/components/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
 import { Button, Card, Spinner } from "@/components/ui";
 import { Stage } from "@/components/stage/Stage";
+import { Scoreboard } from "@/components/Scoreboard";
 import { useToast } from "@/components/Toast";
 import { getParty, getGame, listGames, updateGame, updateParty } from "@/lib/store";
 import { openHostChannel } from "@/lib/sync";
@@ -353,6 +354,15 @@ export default function MasterPage() {
             </div>
           </Card>
 
+          <div className="space-y-5">
+          {/* Scoreboard — game master + co-hosts only */}
+          <Card>
+            <Scoreboard
+              scores={party.scores ?? []}
+              onChange={(s) => updateParty(partyId, { scores: s })}
+            />
+          </Card>
+
           {/* Answers feed */}
           <Card className="flex max-h-[560px] flex-col">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
@@ -379,6 +389,7 @@ export default function MasterPage() {
               </ul>
             )}
           </Card>
+          </div>
         </div>
       </main>
     </div>

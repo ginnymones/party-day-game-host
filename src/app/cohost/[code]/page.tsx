@@ -6,6 +6,7 @@ import { useRequireAuth } from "@/components/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
 import { Button, Card, Spinner } from "@/components/ui";
 import { Stage } from "@/components/stage/Stage";
+import { Scoreboard } from "@/components/Scoreboard";
 import { openCohostChannel } from "@/lib/sync";
 import { isCloudConfigured } from "@/lib/cloud";
 import type { ControlCommand, GameData, LiveState } from "@/lib/types";
@@ -243,6 +244,13 @@ export default function CohostPage() {
                   className="flex-1"
                 />
               </div>
+            </Card>
+
+            <Card className="mt-5">
+              <Scoreboard
+                scores={state.party.scores ?? []}
+                onChange={(s) => send({ kind: "party", from, patch: { scores: s } })}
+              />
             </Card>
           </>
         )}

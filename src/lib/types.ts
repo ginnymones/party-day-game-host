@@ -135,8 +135,20 @@ export interface Party {
    * owner; enforced on the owner's device (see master screen).
    */
   cohostUsernames: string[];
+  /**
+   * Scoreboard for teams/players. Only shown to the game master and co-hosts,
+   * never to the audience or participants.
+   */
+  scores?: ScoreEntry[];
   createdAt: number;
   updatedAt: number;
+}
+
+/** A team or player on the scoreboard. Only game masters/co-hosts see this. */
+export interface ScoreEntry {
+  id: string;
+  name: string;
+  score: number;
 }
 
 /** A participant's submitted answer during a live game. */

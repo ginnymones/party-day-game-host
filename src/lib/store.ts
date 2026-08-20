@@ -100,6 +100,7 @@ export async function createParty(input: {
     activeGameId: null,
     ownerId: input.ownerId,
     cohostUsernames: [],
+    scores: [],
     createdAt: now,
     updatedAt: now,
   };
