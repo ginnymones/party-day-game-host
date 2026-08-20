@@ -409,15 +409,17 @@ function JeopardyStage({
         <p className="text-sm font-semibold uppercase tracking-widest opacity-70">
           {open.cat.name || "Category"} · {open.clue.points}
         </p>
-        <p
-          className="max-w-4xl text-3xl font-bold leading-snug sm:text-5xl text-balance"
-          style={{ fontFamily: displayFont }}
-        >
+        {/* Clue uses the clean system font + generous line height for long,
+            readable text; the answer gets the party's display font. */}
+        <p className="max-w-4xl text-3xl font-semibold leading-relaxed sm:text-5xl sm:leading-relaxed text-balance">
           {open.clue.clue}
         </p>
 
         {open.clue.revealed ? (
-          <p className="max-w-3xl text-2xl font-semibold sm:text-4xl text-[rgb(var(--button))] animate-flip-in">
+          <p
+            className="max-w-3xl text-2xl font-semibold leading-snug sm:text-4xl text-[rgb(var(--button))] animate-flip-in"
+            style={{ fontFamily: displayFont }}
+          >
             {open.clue.answer}
           </p>
         ) : interactive ? (
