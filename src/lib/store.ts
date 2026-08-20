@@ -101,6 +101,7 @@ export async function createParty(input: {
     ownerId: input.ownerId,
     cohostUsernames: [],
     scores: [],
+    showScores: false,
     createdAt: now,
     updatedAt: now,
   };

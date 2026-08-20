@@ -136,10 +136,12 @@ export interface Party {
    */
   cohostUsernames: string[];
   /**
-   * Scoreboard for teams/players. Only shown to the game master and co-hosts,
-   * never to the audience or participants.
+   * Scoreboard for teams/players. Editable only by the game master and
+   * co-hosts. Shown on the audience/stage screen only when `showScores` is on.
    */
   scores?: ScoreEntry[];
+  /** When true, the live scores are displayed on the stage for everyone. */
+  showScores?: boolean;
   createdAt: number;
   updatedAt: number;
 }

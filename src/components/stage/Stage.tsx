@@ -49,6 +49,9 @@ export function Stage({
             "linear-gradient(160deg, rgb(var(--stage-from)) 0%, rgb(var(--stage-to)) 100%)",
         }}
       />
+      {party.showScores && (party.scores?.length ?? 0) > 0 && (
+        <ScorePanel scores={party.scores as NonNullable<Party["scores"]>} />
+      )}
       {fullBleed ? (
         <FullBleedBanner party={party} displayFont={displayFont} />
       ) : (
@@ -65,6 +68,34 @@ export function Stage({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Read-only live scores panel shown on the stage when the host enables it. */
+function ScorePanel({ scores }: { scores: NonNullable<Party["scores"]> }) {
+  const ranked = [...scores].sort((a, b) => b.score - a.score);
+  return (
+    <div className="absolute right-3 top-3 z-20 w-40 rounded-2xl bg-black/45 p-3 text-white shadow-card backdrop-blur sm:right-5 sm:top-5 sm:w-56">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-80">
+        Scores
+      </p>
+      <ul className="space-y-1.5">
+        {ranked.map((e, i) => (
+          <li
+            key={e.id}
+            className="flex items-center justify-between gap-2 text-sm sm:text-base"
+          >
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span aria-hidden="true" className="shrink-0">
+                {i === 0 ? "🏆" : `${i + 1}.`}
+              </span>
+              <span className="truncate">{e.name || "Team"}</span>
+            </span>
+            <span className="shrink-0 font-bold tabular-nums">{e.score}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

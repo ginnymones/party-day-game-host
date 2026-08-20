@@ -162,9 +162,28 @@ export default function CohostPage() {
                     Game
                   </button>
                 </div>
-                <span className="text-sm text-text-muted">
-                  Co-hosting <span className="font-medium text-text-primary">{state.party.name}</span>
-                </span>
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="sm"
+                    variant={state.party.showScores ? "primary" : "secondary"}
+                    aria-pressed={!!state.party.showScores}
+                    onClick={() =>
+                      send({
+                        kind: "party",
+                        from,
+                        patch: { showScores: !state.party.showScores },
+                      })
+                    }
+                  >
+                    {state.party.showScores ? "Scores: shown" : "Scores: hidden"}
+                  </Button>
+                  <span className="text-sm text-text-muted">
+                    Co-hosting{" "}
+                    <span className="font-medium text-text-primary">
+                      {state.party.name}
+                    </span>
+                  </span>
+                </div>
               </div>
 
               <div>

@@ -256,6 +256,16 @@ export default function MasterPage() {
               >
                 Audience view
               </Button>
+              <Button
+                size="sm"
+                variant={party.showScores ? "primary" : "secondary"}
+                aria-pressed={!!party.showScores}
+                onClick={() =>
+                  updateParty(partyId, { showScores: !party.showScores })
+                }
+              >
+                {party.showScores ? "Scores: shown" : "Scores: hidden"}
+              </Button>
             </div>
           </div>
 
