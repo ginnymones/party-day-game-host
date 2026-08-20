@@ -120,6 +120,17 @@ export default function PartySetupPage() {
     router.replace("/host");
   };
 
+  const copyLink = async (path: string, label: string) => {
+    const url = `${window.location.origin}${path}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast(`${label} link copied`, "success");
+    } catch {
+      // Clipboard can be blocked (e.g. non-secure context); show the URL instead.
+      toast(url, "info");
+    }
+  };
+
   const onAddCohost = async (e: React.FormEvent) => {
     e.preventDefault();
     const uname = cohostInput.trim().toLowerCase();
@@ -168,6 +179,12 @@ export default function PartySetupPage() {
               onClick={() => window.open(`/audience/${shareCode}`, "_blank")}
             >
               Open audience view
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => copyLink(`/play/${shareCode}`, "Participant")}
+            >
+              Copy participant link
             </Button>
           </div>
         </Card>
@@ -337,10 +354,19 @@ export default function PartySetupPage() {
               ))}
             </ul>
           )}
-          <p className="text-xs text-text-muted">
-            Share the join code <span className="font-mono">{shareCode}</span> with
-            co-hosts. They sign in, then open the co-host controls for this code.
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => copyLink(`/cohost/${shareCode}`, "Co-host")}
+            >
+              Copy co-host link
+            </Button>
+            <span className="text-xs text-text-muted">
+              Send this to a co-host. They sign into their own account, open the
+              link, and can help run the live party.
+            </span>
+          </div>
         </Card>
 
         {/* Danger zone */}
