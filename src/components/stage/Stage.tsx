@@ -28,11 +28,16 @@ export function Stage({
   className?: string;
 }) {
   const displayFont = displayFontFamily(party.fontTheme);
+  const showingBanner = party.mode === "banner" || !game;
+  const fullBleed =
+    showingBanner && !!party.bannerImage && party.bannerFit === "fullscreen";
+
   return (
     <div
       style={schemeStyle(party.colorScheme)}
       className={cn(
-        "relative flex w-full flex-col items-center justify-center overflow-hidden p-6 sm:p-10",
+        "relative flex w-full flex-col items-center justify-center overflow-hidden",
+        fullBleed ? "p-0" : "p-6 sm:p-10",
         className
       )}
     >
@@ -44,19 +49,59 @@ export function Stage({
             "linear-gradient(160deg, rgb(var(--stage-from)) 0%, rgb(var(--stage-to)) 100%)",
         }}
       />
-      <div className="w-full max-w-5xl" style={{ color: "rgb(var(--stage-ink))" }}>
-        {party.mode === "banner" || !game ? (
-          <BannerStage party={party} displayFont={displayFont} />
-        ) : (
-          <GameStage
-            game={game}
-            interactive={interactive}
-            onReveal={onReveal}
-            displayFont={displayFont}
-          />
-        )}
-      </div>
+      {fullBleed ? (
+        <FullBleedBanner party={party} displayFont={displayFont} />
+      ) : (
+        <div className="w-full max-w-5xl" style={{ color: "rgb(var(--stage-ink))" }}>
+          {showingBanner ? (
+            <BannerStage party={party} displayFont={displayFont} />
+          ) : (
+            <GameStage
+              game={game}
+              interactive={interactive}
+              onReveal={onReveal}
+              displayFont={displayFont}
+            />
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+/** Full-bleed cover image with a gradient scrim so the name stays readable. */
+function FullBleedBanner({
+  party,
+  displayFont,
+}: {
+  party: Party;
+  displayFont?: string;
+}) {
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={party.bannerImage as string}
+        alt={party.bannerAlt || `${party.name} banner`}
+        className="absolute inset-0 -z-10 h-full w-full object-cover"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0) 55%)",
+        }}
+      />
+      <div className="mt-auto w-full max-w-5xl px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] text-center">
+        <h1
+          className="text-4xl font-bold text-white drop-shadow-lg sm:text-6xl"
+          style={{ fontFamily: displayFont }}
+        >
+          {party.name}
+        </h1>
+      </div>
+    </>
   );
 }
 

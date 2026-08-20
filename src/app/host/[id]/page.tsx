@@ -203,6 +203,41 @@ export default function PartySetupPage() {
             value={party.bannerImage}
             onChange={(dataUrl) => updateParty(partyId, { bannerImage: dataUrl })}
           />
+          <div>
+            <span className="mb-2 block text-sm font-medium text-text-primary">
+              Banner display
+            </span>
+            <div className="inline-flex overflow-hidden rounded-xl border border-card-border">
+              {(
+                [
+                  ["framed", "Framed"],
+                  ["fullscreen", "Full screen"],
+                ] as const
+              ).map(([value, label]) => {
+                const active = (party.bannerFit ?? "framed") === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateParty(partyId, { bannerFit: value })}
+                    aria-pressed={active}
+                    className={
+                      "px-4 py-2 text-sm font-medium cursor-pointer " +
+                      (active
+                        ? "bg-button text-button-foreground"
+                        : "bg-card text-text-primary hover:bg-background")
+                    }
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-xs text-text-muted">
+              Full screen fills the display with your image and overlays the party
+              name; framed shows the whole image with the name beneath it.
+            </p>
+          </div>
           <Input
             label="Banner description (for screen readers)"
             value={bannerAlt}

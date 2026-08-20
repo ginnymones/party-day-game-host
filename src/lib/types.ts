@@ -118,6 +118,8 @@ export interface Party {
   /** Compressed data URL of the banner image, kept small for offline storage. */
   bannerImage: string | null;
   bannerAlt: string;
+  /** How the banner image is shown. Defaults to "framed". */
+  bannerFit?: "framed" | "fullscreen";
   colorScheme: ColorSchemeId;
   /** Display font personality for on-screen text. Defaults to "system". */
   fontTheme?: FontThemeId;

@@ -92,6 +92,7 @@ export async function createParty(input: {
     name: input.name.trim() || "Untitled Party",
     bannerImage: input.bannerImage ?? null,
     bannerAlt: input.bannerAlt?.trim() || `${input.name} banner`,
+    bannerFit: "framed",
     colorScheme: input.colorScheme ?? "primary",
     fontTheme: "system",
     theme: input.theme ?? "light",
