@@ -6,17 +6,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card, Input } from "@/components/ui";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ROLE_LABELS } from "@/lib/auth";
-import type { Role } from "@/lib/types";
-
-const SIGNUP_ROLES: Role[] = ["gamemaster", "participant", "audience", "admin"];
-
-const ROLE_HINT: Record<Role, string> = {
-  gamemaster: "Create and run parties, build games, save to your account.",
-  participant: "Join parties by code and submit answers.",
-  audience: "Watch the game master's screen — no input needed.",
-  admin: "Everything a game master can do, plus manage users.",
-};
 
 export default function SignupPage() {
   const { session, loading, signup } = useAuth();
@@ -26,7 +15,6 @@ export default function SignupPage() {
     displayName: "",
     pin: "",
     confirmPin: "",
-    role: "gamemaster" as Role,
   });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +35,7 @@ export default function SignupPage() {
       username: form.username,
       pin: form.pin,
       displayName: form.displayName,
-      role: form.role,
+      role: "admin",
     });
     setSubmitting(false);
     if (result.ok) {
@@ -120,29 +108,11 @@ export default function SignupPage() {
               error={error ?? undefined}
               required
             />
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="role"
-                className="text-sm font-medium text-text-primary"
-              >
-                Role
-              </label>
-              <select
-                id="role"
-                value={form.role}
-                onChange={(e) =>
-                  setForm({ ...form, role: e.target.value as Role })
-                }
-                className="h-11 rounded-xl border border-card-border bg-card px-3 text-text-primary focus:outline-none"
-              >
-                {SIGNUP_ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {ROLE_LABELS[r]}
-                  </option>
-                ))}
-              </select>
-              <p className="text-sm text-text-muted">{ROLE_HINT[form.role]}</p>
-            </div>
+            <p className="rounded-xl bg-background p-3 text-sm text-text-muted">
+              Your account is yours to run. Create parties, build games, and
+              invite others with a join code. You can add co-hosts to help run a
+              live party.
+            </p>
             <Button type="submit" size="lg" loading={submitting}>
               {submitting ? "Creating account…" : "Create account"}
             </Button>

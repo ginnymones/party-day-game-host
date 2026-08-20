@@ -68,12 +68,36 @@ export async function createParty(input: {
     mode: "banner",
     activeGameId: null,
     ownerId: input.ownerId,
+    cohostUsernames: [],
     createdAt: now,
     updatedAt: now,
   };
   await db.parties.add(party);
   pushParty(party);
   return party;
+}
+
+/** Add a co-host by username (idempotent, case-insensitive). */
+export async function addCohost(partyId: string, username: string): Promise<void> {
+  const uname = username.trim().toLowerCase();
+  if (!uname) return;
+  const party = await db.parties.get(partyId);
+  if (!party) return;
+  const current = party.cohostUsernames ?? [];
+  if (current.includes(uname)) return;
+  await updateParty(partyId, { cohostUsernames: [...current, uname] });
+}
+
+export async function removeCohost(
+  partyId: string,
+  username: string
+): Promise<void> {
+  const party = await db.parties.get(partyId);
+  if (!party) return;
+  const current = party.cohostUsernames ?? [];
+  await updateParty(partyId, {
+    cohostUsernames: current.filter((u) => u !== username),
+  });
 }
 
 export async function getParty(id: string): Promise<Party | undefined> {

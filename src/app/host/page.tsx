@@ -10,7 +10,7 @@ import { useToast } from "@/components/Toast";
 import { createParty, listPartiesByOwner } from "@/lib/store";
 
 export default function HostPage() {
-  const { session, loading, authorized } = useRequireAuth(["gamemaster", "admin"]);
+  const { session, loading, authorized } = useRequireAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState("");

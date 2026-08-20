@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/components/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
@@ -14,7 +13,7 @@ export default function HomePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [code, setCode] = useState("");
-  const [joining, setJoining] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   if (loading || !authorized || !session) {
     return (
@@ -24,25 +23,28 @@ export default function HomePage() {
     );
   }
 
-  const canHost = session.role === "gamemaster" || session.role === "admin";
-
-  const onJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resolveCode = async (): Promise<string | null> => {
     const trimmed = code.trim().toUpperCase();
-    if (!trimmed) return;
-    setJoining(true);
-    const party = await getPartyByCode(trimmed);
-    setJoining(false);
-    if (!party) {
-      toast("No party found with that code.", "error");
-      return;
+    if (!trimmed) {
+      toast("Enter a party code first.", "error");
+      return null;
     }
-    // Participants go to answer view; everyone else can watch as audience.
-    if (session.role === "participant") {
-      router.push(`/play/${party.code}`);
-    } else {
-      router.push(`/audience/${party.code}`);
-    }
+    return trimmed;
+  };
+
+  const onWatch = async () => {
+    const c = await resolveCode();
+    if (c) router.push(`/audience/${c}`);
+  };
+
+  const onCohost = async () => {
+    const c = await resolveCode();
+    if (!c) return;
+    setChecking(true);
+    // A quick existence check for same-device parties; remote is validated live.
+    await getPartyByCode(c);
+    setChecking(false);
+    router.push(`/cohost/${c}`);
   };
 
   return (
@@ -54,7 +56,7 @@ export default function HomePage() {
             Welcome, {session.displayName}
           </h1>
           <p className="mt-1 text-text-muted">
-            Host a gathering or join one that&apos;s already running.
+            Host your own party or help run someone else&apos;s.
           </p>
         </div>
 
@@ -65,19 +67,13 @@ export default function HomePage() {
             </h2>
             <p className="mt-1 flex-1 text-sm text-text-muted">
               Set up your banner and games, then run everything from the game
-              master screen — works even without internet.
+              master screen — works even without internet. You&apos;re the game
+              master of any party you create.
             </p>
             <div className="mt-4">
-              {canHost ? (
-                <Button onClick={() => router.push("/host")}>
-                  Go to my parties
-                </Button>
-              ) : (
-                <p className="rounded-xl bg-background p-3 text-sm text-text-muted">
-                  Hosting is available to game masters. Ask an admin to upgrade
-                  your account if you need to run a party.
-                </p>
-              )}
+              <Button onClick={() => router.push("/host")}>
+                Go to my parties
+              </Button>
             </div>
           </Card>
 
@@ -88,7 +84,7 @@ export default function HomePage() {
             <p className="mt-1 text-sm text-text-muted">
               Enter the code your host shared with you.
             </p>
-            <form onSubmit={onJoin} className="mt-4 flex flex-col gap-3">
+            <div className="mt-4 flex flex-col gap-3">
               <Input
                 label="Party code"
                 name="code"
@@ -98,23 +94,21 @@ export default function HomePage() {
                 autoCapitalize="characters"
                 className="uppercase tracking-wide"
               />
-              <Button type="submit" variant="secondary" loading={joining}>
-                Join party
-              </Button>
-            </form>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={onWatch}>
+                  Watch as audience
+                </Button>
+                <Button variant="ghost" loading={checking} onClick={onCohost}>
+                  Co-host controls
+                </Button>
+              </div>
+              <p className="text-xs text-text-muted">
+                Playing along? Ask your host for the participant link — no account
+                needed to submit answers.
+              </p>
+            </div>
           </Card>
         </div>
-
-        {session.role === "admin" && (
-          <div className="mt-6">
-            <Link
-              href="/admin"
-              className="text-sm font-medium text-accent hover:underline"
-            >
-              Open admin panel →
-            </Link>
-          </div>
-        )}
       </main>
     </div>
   );

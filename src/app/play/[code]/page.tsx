@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
-import { useRequireAuth } from "@/components/AuthProvider";
+import { useAuth } from "@/components/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
-import { Button, Card, Input, Spinner, Textarea } from "@/components/ui";
+import { Button, Card, Input, Textarea } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { getGame, getPartyByCode } from "@/lib/store";
 import { ensureSeeded, db } from "@/lib/db";
@@ -14,7 +14,7 @@ import { newId } from "@/lib/crypto";
 import type { AnswerSubmission, LiveState } from "@/lib/types";
 
 export default function PlayPage() {
-  const { session, loading, authorized } = useRequireAuth();
+  const { session } = useAuth();
   const params = useParams<{ code: string }>();
   const code = decodeURIComponent(params.code || "").toUpperCase();
   const { toast } = useToast();
@@ -54,14 +54,6 @@ export default function PlayPage() {
   const state: LiveState | null = localParty
     ? { party: localParty, activeGame: localGame ?? null }
     : remote;
-
-  if (loading || !authorized || !session) {
-    return (
-      <main className="grid min-h-dvh place-items-center bg-background">
-        <Spinner className="h-6 w-6" />
-      </main>
-    );
-  }
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

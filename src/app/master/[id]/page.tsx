@@ -11,10 +11,16 @@ import { useToast } from "@/components/Toast";
 import { getParty, getGame, listGames, updateGame, updateParty } from "@/lib/store";
 import { openHostChannel } from "@/lib/sync";
 import { db } from "@/lib/db";
-import type { AnswerSubmission, GameData, LiveState } from "@/lib/types";
+import type {
+  AnswerSubmission,
+  ControlCommand,
+  GameData,
+  LiveState,
+  Party,
+} from "@/lib/types";
 
 export default function MasterPage() {
-  const { loading, authorized } = useRequireAuth(["gamemaster", "admin"]);
+  const { loading, authorized } = useRequireAuth();
   const params = useParams<{ id: string }>();
   const partyId = params.id;
   const router = useRouter();
@@ -38,16 +44,37 @@ export default function MasterPage() {
   const [answers, setAnswers] = useState<AnswerSubmission[]>([]);
   const pushRef = useRef<((s: LiveState) => void) | null>(null);
 
-  // Build the current live state to broadcast to viewers.
+  // Build the current live state to broadcast to viewers (and co-hosts).
   const liveState: LiveState | null = useMemo(() => {
     if (!party) return null;
-    return { party, activeGame: activeGame ?? null };
-  }, [party, activeGame]);
+    return { party, activeGame: activeGame ?? null, games: games ?? [] };
+  }, [party, activeGame, games]);
 
   const getStateRef = useRef<() => LiveState>(() => liveState as LiveState);
   useEffect(() => {
     getStateRef.current = () => liveState as LiveState;
   }, [liveState]);
+
+  // Keep the latest party in a ref so the channel callback can authorize
+  // incoming co-host commands against the current allowlist.
+  const partyRef = useRef<Party | null>(null);
+  useEffect(() => {
+    partyRef.current = party ?? null;
+  }, [party]);
+
+  // Apply a control command from an authorized co-host to our local DB, which
+  // then re-broadcasts the new state to everyone.
+  const applyControl = useCallback((cmd: ControlCommand) => {
+    const current = partyRef.current;
+    if (!current) return;
+    const allow = current.cohostUsernames ?? [];
+    if (!allow.includes(cmd.from)) return; // not an authorized co-host
+    if (cmd.kind === "party") {
+      updateParty(current.id, cmd.patch);
+    } else if (cmd.kind === "game") {
+      updateGame(cmd.gameId, { data: cmd.data });
+    }
+  }, []);
 
   // Open the realtime channel once per party code (when sync is configured).
   useEffect(() => {
@@ -56,13 +83,17 @@ export default function MasterPage() {
       setAnswers((prev) => [a, ...prev].slice(0, 100));
       db.answers.put(a).catch(() => {});
     };
-    const handle = openHostChannel(party.code, onAnswer, () => getStateRef.current());
+    const handle = openHostChannel(party.code, {
+      onAnswer,
+      onControl: applyControl,
+      getState: () => getStateRef.current(),
+    });
     if (handle) pushRef.current = handle.push;
     return () => {
       handle?.close();
       pushRef.current = null;
     };
-  }, [party?.code]);
+  }, [party?.code, applyControl]);
 
   // Broadcast whenever the live state changes.
   useEffect(() => {

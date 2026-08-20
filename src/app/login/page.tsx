@@ -92,14 +92,13 @@ export default function LoginPage() {
 
         <details className="mt-4 rounded-xl border border-card-border bg-card/60 p-3 text-sm text-text-muted">
           <summary className="cursor-pointer font-medium text-text-primary">
-            Demo accounts
+            Just trying it out?
           </summary>
-          <ul className="mt-2 space-y-1">
-            <li>Game Master — <code>gamemaster</code> / <code>banana</code></li>
-            <li>Participant — <code>participant</code> / <code>bababa</code></li>
-            <li>Audience — <code>audience</code> / <code>123456</code></li>
-            <li>Admin — <code>admin</code> / <code>246810</code></li>
-          </ul>
+          <p className="mt-2">
+            Use the demo login <code>gamemaster</code> / <code>banana</code>, or
+            create your own account. Guests joining a party don&apos;t need an
+            account — just the join link from the host.
+          </p>
         </details>
       </div>
     </main>

@@ -3,7 +3,7 @@ import {
   type RealtimeChannel,
   type SupabaseClient,
 } from "@supabase/supabase-js";
-import type { AnswerSubmission, LiveState } from "./types";
+import type { AnswerSubmission, ControlCommand, LiveState } from "./types";
 
 /**
  * Optional live-sync layer.
@@ -50,8 +50,11 @@ const channelName = (code: string) => `party:${code.toLowerCase()}`;
  */
 export function openHostChannel(
   code: string,
-  onAnswer: (answer: AnswerSubmission) => void,
-  getState: () => LiveState
+  handlers: {
+    onAnswer: (answer: AnswerSubmission) => void;
+    onControl?: (command: ControlCommand) => void;
+    getState: () => LiveState;
+  }
 ): { push: (state: LiveState) => void; close: () => void } | null {
   const supabase = getClient();
   if (!supabase) return null;
@@ -66,10 +69,13 @@ export function openHostChannel(
 
   channel
     .on("broadcast", { event: "answer" }, ({ payload }) => {
-      onAnswer(payload as AnswerSubmission);
+      handlers.onAnswer(payload as AnswerSubmission);
+    })
+    .on("broadcast", { event: "control" }, ({ payload }) => {
+      handlers.onControl?.(payload as ControlCommand);
     })
     .on("broadcast", { event: "request-state" }, () => {
-      push(getState());
+      push(handlers.getState());
     })
     .subscribe();
 
@@ -109,6 +115,38 @@ export function subscribeToParty(
 
   return () => {
     supabase.removeChannel(channel);
+  };
+}
+
+/**
+ * Co-host side: send a control command to the owner's device. Returns a
+ * function to close the channel when the co-host screen unmounts.
+ */
+export function openCohostChannel(
+  code: string,
+  onState: (state: LiveState) => void
+): { send: (command: ControlCommand) => void; close: () => void } | null {
+  const supabase = getClient();
+  if (!supabase) return null;
+  const channel = supabase.channel(channelName(code), {
+    config: { broadcast: { self: false } },
+  });
+  channel
+    .on("broadcast", { event: "state" }, ({ payload }) => {
+      onState(payload as LiveState);
+    })
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        channel.send({ type: "broadcast", event: "request-state", payload: {} });
+      }
+    });
+  return {
+    send: (command: ControlCommand) => {
+      channel.send({ type: "broadcast", event: "control", payload: command });
+    },
+    close: () => {
+      supabase.removeChannel(channel);
+    },
   };
 }
 

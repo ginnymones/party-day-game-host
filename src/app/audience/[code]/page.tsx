@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Stage } from "@/components/stage/Stage";
 import { Spinner } from "@/components/ui";
+import { useAuth } from "@/components/AuthProvider";
 import { getGame, getPartyByCode } from "@/lib/store";
 import { ensureSeeded } from "@/lib/db";
 import { subscribeToParty } from "@/lib/sync";
@@ -19,6 +21,7 @@ import type { LiveState } from "@/lib/types";
 export default function AudiencePage() {
   const params = useParams<{ code: string }>();
   const code = decodeURIComponent(params.code || "").toUpperCase();
+  const { session } = useAuth();
 
   const [remote, setRemote] = useState<LiveState | null>(null);
   const [seeded, setSeeded] = useState(false);
@@ -82,8 +85,19 @@ export default function AudiencePage() {
     );
   }
 
+  const canCohost =
+    session && (state.party.cohostUsernames ?? []).includes(session.username);
+
   return (
-    <main className="min-h-dvh">
+    <main className="relative min-h-dvh">
+      {canCohost && (
+        <Link
+          href={`/cohost/${code}`}
+          className="absolute right-3 top-3 z-10 rounded-full bg-card/90 px-3 py-1.5 text-xs font-medium text-text-primary shadow-card backdrop-blur hover:bg-card"
+        >
+          Open co-host controls →
+        </Link>
+      )}
       <Stage party={state.party} game={state.activeGame} className="min-h-dvh" />
     </main>
   );

@@ -10,12 +10,14 @@ import { ColorSchemePicker } from "@/components/ColorSchemePicker";
 import { BannerUploader } from "@/components/BannerUploader";
 import { useToast } from "@/components/Toast";
 import {
+  addCohost,
   addGame,
   deleteGame,
   deleteParty,
   defaultGameTitle,
   getParty,
   listGames,
+  removeCohost,
   updateParty,
 } from "@/lib/store";
 import type { ColorSchemeId, GameType } from "@/lib/types";
@@ -27,7 +29,7 @@ const GAME_TYPES: { type: GameType; label: string; blurb: string }[] = [
 ];
 
 export default function PartySetupPage() {
-  const { session, loading, authorized } = useRequireAuth(["gamemaster", "admin"]);
+  const { session, loading, authorized } = useRequireAuth();
   const params = useParams<{ id: string }>();
   const partyId = params.id;
   const router = useRouter();
@@ -44,6 +46,7 @@ export default function PartySetupPage() {
   // Local editable copy of party name for a snappy input experience.
   const [name, setName] = useState("");
   const [bannerAlt, setBannerAlt] = useState("");
+  const [cohostInput, setCohostInput] = useState("");
   useEffect(() => {
     if (party) {
       setName(party.name);
@@ -70,7 +73,7 @@ export default function PartySetupPage() {
     );
   }
 
-  if (party === null || (session && party && party.ownerId !== session.ownerKey && session.role !== "admin")) {
+  if (party === null || (session && party && party.ownerId !== session.ownerKey)) {
     return (
       <div className="min-h-dvh bg-background">
         <AppHeader title="Party setup" />
@@ -115,6 +118,19 @@ export default function PartySetupPage() {
     await deleteParty(partyId);
     toast("Party deleted", "info");
     router.replace("/host");
+  };
+
+  const onAddCohost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const uname = cohostInput.trim().toLowerCase();
+    if (!uname) return;
+    if ((party.cohostUsernames ?? []).includes(uname)) {
+      toast("That co-host is already added.", "info");
+      return;
+    }
+    await addCohost(partyId, uname);
+    setCohostInput("");
+    toast(`Added @${uname} as a co-host`, "success");
   };
 
   const shareCode = party.code;
@@ -271,6 +287,60 @@ export default function PartySetupPage() {
               ))}
             </div>
           </div>
+        </Card>
+
+        {/* Co-hosts */}
+        <Card className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">Co-hosts</h2>
+            <p className="mt-1 text-sm text-text-muted">
+              Co-hosts can help run the live session — switch the banner/game and
+              reveal cards — but can&apos;t edit your games. They need their own
+              account, and control works while you have this party running.
+            </p>
+          </div>
+
+          <form onSubmit={onAddCohost} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <Input
+                label="Add co-host by username"
+                value={cohostInput}
+                autoCapitalize="none"
+                onChange={(e) => setCohostInput(e.target.value)}
+                placeholder="e.g. jordan"
+              />
+            </div>
+            <Button type="submit" variant="secondary">
+              Add co-host
+            </Button>
+          </form>
+
+          {(party.cohostUsernames ?? []).length === 0 ? (
+            <p className="text-sm text-text-muted">No co-hosts yet.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {(party.cohostUsernames ?? []).map((u) => (
+                <li
+                  key={u}
+                  className="inline-flex items-center gap-2 rounded-full border border-card-border bg-background px-3 py-1 text-sm"
+                >
+                  <span className="text-text-primary">@{u}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeCohost(partyId, u)}
+                    aria-label={`Remove co-host ${u}`}
+                    className="text-text-muted hover:text-danger cursor-pointer"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-xs text-text-muted">
+            Share the join code <span className="font-mono">{shareCode}</span> with
+            co-hosts. They sign in, then open the co-host controls for this code.
+          </p>
         </Card>
 
         {/* Danger zone */}

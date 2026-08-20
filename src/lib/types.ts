@@ -104,6 +104,12 @@ export interface Party {
   /** Which game is on screen when mode === "game". */
   activeGameId: string | null;
   ownerId: string;
+  /**
+   * Usernames granted live-control co-hosting for this party. Co-hosts can drive
+   * the running session but cannot edit the party or its games. Managed by the
+   * owner; enforced on the owner's device (see master screen).
+   */
+  cohostUsernames: string[];
   createdAt: number;
   updatedAt: number;
 }
@@ -122,4 +128,15 @@ export interface AnswerSubmission {
 export interface LiveState {
   party: Party;
   activeGame: Game | null;
+  /** All games for the party — sent so co-hosts can switch between them. */
+  games?: Game[];
 }
+
+/**
+ * A control action sent by a co-host to the owner's device over the live
+ * channel. `from` is the co-host's username, checked against the party's
+ * allowlist before the owner applies it.
+ */
+export type ControlCommand =
+  | { kind: "party"; from: string; patch: Partial<Party> }
+  | { kind: "game"; from: string; gameId: string; data: GameData };

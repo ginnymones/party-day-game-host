@@ -11,7 +11,7 @@ import { newId } from "@/lib/crypto";
 import type { Game, GameData } from "@/lib/types";
 
 export default function GameEditorPage() {
-  const { loading, authorized } = useRequireAuth(["gamemaster", "admin"]);
+  const { loading, authorized } = useRequireAuth();
   const params = useParams<{ id: string; gameId: string }>();
   const router = useRouter();
   const { toast } = useToast();

@@ -7,7 +7,6 @@ import { ThemeToggle } from "./ThemeToggle";
 import { NetworkStatus } from "./NetworkStatus";
 import { CloudStatus } from "./CloudStatus";
 import { Button } from "./ui";
-import { ROLE_LABELS } from "@/lib/auth";
 
 export function AppHeader({
   title,
@@ -54,7 +53,7 @@ export function AppHeader({
           {session && (
             <div className="flex items-center gap-2">
               <span className="hidden text-sm text-text-muted md:inline">
-                {session.displayName} · {ROLE_LABELS[session.role]}
+                {session.displayName}
               </span>
               <Button variant="secondary" size="sm" onClick={onLogout}>
                 Sign out
