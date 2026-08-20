@@ -29,7 +29,8 @@ function getClient(): SupabaseClient | null {
   if (!isSyncConfigured()) return null;
   if (!client) {
     client = createClient(url as string, anonKey as string, {
-      realtime: { params: { eventsPerSecond: 5 } },
+      // Allow bursts of reveals without the client throttling messages away.
+      realtime: { params: { eventsPerSecond: 20 } },
       auth: { persistSession: false },
     });
   }
@@ -67,6 +68,11 @@ export function openHostChannel(
     channel.send({ type: "broadcast", event: "state", payload: state });
   };
 
+  // Heartbeat: periodically re-broadcast the current state so viewers that
+  // missed a message (dropped broadcast, brief disconnect, device wake) converge
+  // back to the latest state within a couple of seconds.
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
+
   channel
     .on("broadcast", { event: "answer" }, ({ payload }) => {
       handlers.onAnswer(payload as AnswerSubmission);
@@ -77,11 +83,19 @@ export function openHostChannel(
     .on("broadcast", { event: "request-state" }, () => {
       push(handlers.getState());
     })
-    .subscribe();
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        push(handlers.getState());
+        if (!heartbeat) {
+          heartbeat = setInterval(() => push(handlers.getState()), 2500);
+        }
+      }
+    });
 
   return {
     push,
     close: () => {
+      if (heartbeat) clearInterval(heartbeat);
       supabase.removeChannel(channel);
     },
   };
@@ -102,18 +116,28 @@ export function subscribeToParty(
     config: { broadcast: { self: false } },
   });
 
+  const requestState = () =>
+    channel.send({ type: "broadcast", event: "request-state", payload: {} });
+
   channel
     .on("broadcast", { event: "state" }, ({ payload }) => {
       onState(payload as LiveState);
     })
     .subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        // Ask the host to re-broadcast current state for late joiners.
-        channel.send({ type: "broadcast", event: "request-state", payload: {} });
-      }
+      // Fires on first subscribe and on auto-rejoin after a reconnect.
+      if (status === "SUBSCRIBED") requestState();
     });
 
+  // Recover quickly when the device wakes or regains connectivity.
+  const onVisible = () => {
+    if (document.visibilityState === "visible") requestState();
+  };
+  window.addEventListener("online", requestState);
+  document.addEventListener("visibilitychange", onVisible);
+
   return () => {
+    window.removeEventListener("online", requestState);
+    document.removeEventListener("visibilitychange", onVisible);
     supabase.removeChannel(channel);
   };
 }
