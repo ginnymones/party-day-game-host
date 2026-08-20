@@ -58,8 +58,10 @@ export interface JeopardyClue {
   points: number;
   clue: string;
   answer: string;
-  /** false = card face up (showing points), true = opened (showing clue/answer) */
+  /** true once the answer has been revealed for this clue. */
   revealed: boolean;
+  /** true once the clue has been opened (used) — dimmed on the board. */
+  played?: boolean;
 }
 
 export interface JeopardyCategory {
@@ -72,7 +74,12 @@ export interface JeopardyCategory {
 export type GameData =
   | { type: "bringme"; challenges: BringMeChallenge[]; currentIndex: number }
   | { type: "feud"; questions: FeudQuestion[]; currentIndex: number }
-  | { type: "jeopardy"; categories: JeopardyCategory[] };
+  | {
+      type: "jeopardy";
+      categories: JeopardyCategory[];
+      /** The clue currently opened full-screen, or null when showing the board. */
+      openClue?: { categoryId: string; clueId: string } | null;
+    };
 
 /** Legacy single-question Feud shape, migrated on read (see store.ts). */
 export interface LegacyFeudData {

@@ -352,16 +352,26 @@ function JeopardyStage({
   onReveal?: (next: GameData) => void;
   displayFont?: string;
 }) {
-  const toggle = (categoryId: string, clueId: string) => {
+  const open = data.openClue
+    ? (() => {
+        const cat = data.categories.find((c) => c.id === data.openClue!.categoryId);
+        const clue = cat?.clues.find((q) => q.id === data.openClue!.clueId);
+        return cat && clue ? { cat, clue } : null;
+      })()
+    : null;
+
+  // Open a clue full-screen (and mark it played on the board).
+  const openClue = (categoryId: string, clueId: string) => {
     if (!interactive || !onReveal) return;
     onReveal({
       ...data,
+      openClue: { categoryId, clueId },
       categories: data.categories.map((c) =>
         c.id === categoryId
           ? {
               ...c,
               clues: c.clues.map((q) =>
-                q.id === clueId ? { ...q, revealed: !q.revealed } : q
+                q.id === clueId ? { ...q, played: true } : q
               ),
             }
           : c
@@ -369,6 +379,71 @@ function JeopardyStage({
     });
   };
 
+  const revealAnswer = () => {
+    if (!interactive || !onReveal || !data.openClue) return;
+    const { categoryId, clueId } = data.openClue;
+    onReveal({
+      ...data,
+      categories: data.categories.map((c) =>
+        c.id === categoryId
+          ? {
+              ...c,
+              clues: c.clues.map((q) =>
+                q.id === clueId ? { ...q, revealed: true } : q
+              ),
+            }
+          : c
+      ),
+    });
+  };
+
+  const backToBoard = () => {
+    if (!interactive || !onReveal) return;
+    onReveal({ ...data, openClue: null });
+  };
+
+  // Full-screen clue view.
+  if (open) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-8 py-6 text-center animate-fade-in">
+        <p className="text-sm font-semibold uppercase tracking-widest opacity-70">
+          {open.cat.name || "Category"} · {open.clue.points}
+        </p>
+        <p
+          className="max-w-4xl text-3xl font-bold leading-snug sm:text-5xl text-balance"
+          style={{ fontFamily: displayFont }}
+        >
+          {open.clue.clue}
+        </p>
+
+        {open.clue.revealed ? (
+          <p className="max-w-3xl text-2xl font-semibold sm:text-4xl text-[rgb(var(--button))] animate-flip-in">
+            {open.clue.answer}
+          </p>
+        ) : interactive ? (
+          <button
+            type="button"
+            onClick={revealAnswer}
+            className="cursor-pointer rounded-xl bg-[rgb(var(--button))] px-6 py-3 text-lg font-semibold text-white shadow-card hover:brightness-110"
+          >
+            Reveal answer
+          </button>
+        ) : null}
+
+        {interactive && (
+          <button
+            type="button"
+            onClick={backToBoard}
+            className="cursor-pointer text-sm font-medium underline opacity-70 hover:opacity-100"
+          >
+            ← Back to board
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Board view.
   return (
     <div
       className="grid animate-fade-in gap-3"
@@ -389,18 +464,13 @@ function JeopardyStage({
           </div>
           {cat.clues.map((clue) => {
             const cardClass = cn(
-              "min-h-[92px] w-full rounded-xl border-2 p-3 text-center transition-all",
+              "grid min-h-[92px] w-full place-items-center rounded-xl border-2 p-3 text-center transition-all",
               interactive && "cursor-pointer",
-              clue.revealed
-                ? "animate-flip-in border-transparent bg-white/70 text-[rgb(var(--stage-ink))]"
-                : "grid place-items-center border-[rgb(var(--button))]/40 bg-white/40 text-[rgb(var(--button))]"
+              clue.played
+                ? "border-transparent bg-white/20 text-[rgb(var(--button))]/40"
+                : "border-[rgb(var(--button))]/40 bg-white/40 text-[rgb(var(--button))]"
             );
-            const inner = clue.revealed ? (
-              <div className="space-y-1.5">
-                <p className="text-sm font-medium sm:text-base">{clue.clue}</p>
-                <p className="text-sm font-bold opacity-80">{clue.answer}</p>
-              </div>
-            ) : (
+            const inner = (
               <span className="text-2xl font-extrabold tabular-nums sm:text-3xl">
                 {clue.points}
               </span>
@@ -409,7 +479,7 @@ function JeopardyStage({
               <button
                 key={clue.id}
                 type="button"
-                onClick={() => toggle(cat.id, clue.id)}
+                onClick={() => openClue(cat.id, clue.id)}
                 className={cardClass}
               >
                 {inner}

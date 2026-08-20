@@ -179,9 +179,14 @@ export default function MasterPage() {
     } else if (d.type === "jeopardy") {
       onReveal({
         ...d,
+        openClue: revealed ? d.openClue ?? null : null,
         categories: d.categories.map((c) => ({
           ...c,
-          clues: c.clues.map((q) => ({ ...q, revealed })),
+          clues: c.clues.map((q) => ({
+            ...q,
+            revealed,
+            played: revealed ? q.played : false,
+          })),
         })),
       });
     }
@@ -189,7 +194,7 @@ export default function MasterPage() {
 
   const resetReveals = () => {
     setReveals(false);
-    toast("Reveals reset", "info");
+    toast("Board reset", "info");
   };
   const revealAll = () => setReveals(true);
 
