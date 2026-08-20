@@ -2,26 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Design tokens from PROJECT_SPEC.
+  Light mode is primary; dark mode via the `.dark` class on <html>.
+  Contrast checked for WCAG AA on the primary text/background pairs.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: 250 249 247; /* #FAF9F7 */
+  --card: 255 255 255; /* #FFFFFF */
+  --card-border: 232 230 226; /* subtle warm border */
+  --text-primary: 17 17 17; /* #111111 */
+  --text-muted: 47 49 98; /* #2F3162 */
+  --accent: 105 112 235; /* #6970EB */
+  --button: 62 71 231; /* #3E47E7 */
+  --button-foreground: 255 255 255;
+  --success: 44 193 86; /* #2CC156 */
+  --warning: 228 121 39; /* #E47927 */
+  --danger: 227 72 72; /* #E34848 */
+  --ring: 62 71 231;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: 15 16 32; /* deep navy */
+  --card: 26 28 51; /* raised navy */
+  --card-border: 46 49 88;
+  --text-primary: 240 241 250;
+  --text-muted: 176 180 214;
+  --accent: 138 144 245;
+  --button: 92 101 240;
+  --button-foreground: 255 255 255;
+  --success: 63 205 105;
+  --warning: 240 141 66;
+  --danger: 240 99 99;
+  --ring: 138 144 245;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--text-primary));
+  background: rgb(var(--background));
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Visible focus ring for keyboard users on all interactive elements */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid rgb(var(--ring));
+  outline-offset: 2px;
 }
