@@ -93,6 +93,7 @@ export async function createParty(input: {
     bannerImage: input.bannerImage ?? null,
     bannerAlt: input.bannerAlt?.trim() || `${input.name} banner`,
     colorScheme: input.colorScheme ?? "primary",
+    fontTheme: "system",
     theme: input.theme ?? "light",
     mode: "banner",
     activeGameId: null,

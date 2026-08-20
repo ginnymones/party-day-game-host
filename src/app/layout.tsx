@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import {
+  DynaPuff,
+  Righteous,
+  Playfair_Display,
+  Pacifico,
+} from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ToastProvider } from "@/components/Toast";
@@ -15,6 +21,42 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
+
+// Display fonts for the per-party "Font theme" picker. Self-hosted at build,
+// so they work offline. Kept to a couple of weights each to stay light.
+const playful = DynaPuff({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
+  variable: "--font-playful",
+});
+const boldDisplay = Righteous({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-bold-display",
+});
+const elegant = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+  variable: "--font-elegant",
+});
+const handwritten = Pacifico({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-handwritten",
+});
+
+const fontVariables = [
+  geistSans.variable,
+  geistMono.variable,
+  playful.variable,
+  boldDisplay.variable,
+  elegant.variable,
+  handwritten.variable,
+].join(" ");
 
 export const metadata: Metadata = {
   title: "Party Day Game Host",
@@ -49,7 +91,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={fontVariables}>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <ServiceWorkerRegister />
         <ToastProvider>

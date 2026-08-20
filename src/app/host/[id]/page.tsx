@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/components/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
 import { Button, Card, Input, Spinner } from "@/components/ui";
 import { ColorSchemePicker } from "@/components/ColorSchemePicker";
+import { FontThemePicker } from "@/components/FontThemePicker";
 import { BannerUploader } from "@/components/BannerUploader";
 import { useToast } from "@/components/Toast";
 import {
@@ -212,6 +213,10 @@ export default function PartySetupPage() {
           <ColorSchemePicker
             value={party.colorScheme}
             onChange={(id: ColorSchemeId) => updateParty(partyId, { colorScheme: id })}
+          />
+          <FontThemePicker
+            value={party.fontTheme ?? "system"}
+            onChange={(id) => updateParty(partyId, { fontTheme: id })}
           />
           <div>
             <span className="mb-2 block text-sm font-medium text-text-primary">

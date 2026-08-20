@@ -102,6 +102,14 @@ export type ColorSchemeId =
   | "berry"
   | "midnight";
 
+/** Display font personality for a party's on-screen text. */
+export type FontThemeId =
+  | "system"
+  | "playful"
+  | "bold"
+  | "elegant"
+  | "handwritten";
+
 export interface Party {
   id: string;
   /** Short human-friendly join code, e.g. "SUNSET-42". */
@@ -111,6 +119,8 @@ export interface Party {
   bannerImage: string | null;
   bannerAlt: string;
   colorScheme: ColorSchemeId;
+  /** Display font personality for on-screen text. Defaults to "system". */
+  fontTheme?: FontThemeId;
   theme: "light" | "dark";
   /** What the audience currently sees. */
   mode: PartyMode;

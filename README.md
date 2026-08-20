@@ -18,7 +18,17 @@ zero connectivity; participant and audience screens update live when online.
 - **PIN auth** — simple username + PIN login, validated locally so it works
   offline, backed by cloud accounts so a login works on any device.
 - **PWA** — installable, with a service worker that caches the app shell.
-- **Light/dark theme** + per-party color schemes.
+- **Light/dark theme**, per-party color schemes, and per-party **font themes**
+  (Clean / Playful / Bold / Elegant / Handwritten).
+
+## Fonts
+
+The system/UI font is **Google Sans Flex**, self-hosted for offline use. To
+enable it, drop `google-sans-flex.woff2` into `public/fonts/` (see
+[`public/fonts/README.md`](./public/fonts/README.md)); until then the app falls
+back to Geist. The per-party display fonts (DynaPuff, Righteous, Playfair
+Display, Pacifico) are self-hosted automatically at build via `next/font` and
+need no setup.
 
 ## Roles
 

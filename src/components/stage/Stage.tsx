@@ -1,6 +1,7 @@
 "use client";
 
 import { schemeStyle } from "@/lib/colorSchemes";
+import { displayFontFamily } from "@/lib/fontThemes";
 import { cn } from "@/lib/cn";
 import type { Game, GameData, Party } from "@/lib/types";
 
@@ -26,6 +27,7 @@ export function Stage({
   onReveal?: (next: GameData) => void;
   className?: string;
 }) {
+  const displayFont = displayFontFamily(party.fontTheme);
   return (
     <div
       style={schemeStyle(party.colorScheme)}
@@ -44,12 +46,13 @@ export function Stage({
       />
       <div className="w-full max-w-5xl" style={{ color: "rgb(var(--stage-ink))" }}>
         {party.mode === "banner" || !game ? (
-          <BannerStage party={party} />
+          <BannerStage party={party} displayFont={displayFont} />
         ) : (
           <GameStage
             game={game}
             interactive={interactive}
             onReveal={onReveal}
+            displayFont={displayFont}
           />
         )}
       </div>
@@ -57,7 +60,13 @@ export function Stage({
   );
 }
 
-function BannerStage({ party }: { party: Party }) {
+function BannerStage({
+  party,
+  displayFont,
+}: {
+  party: Party;
+  displayFont?: string;
+}) {
   return (
     <div className="flex flex-col items-center gap-6 text-center animate-fade-in">
       {party.bannerImage ? (
@@ -68,12 +77,19 @@ function BannerStage({ party }: { party: Party }) {
             alt={party.bannerAlt || `${party.name} banner`}
             className="max-h-[70vh] w-auto rounded-2xl object-contain shadow-card"
           />
-          <h1 className="text-2xl font-semibold sm:text-4xl">{party.name}</h1>
+          <h1 className="text-2xl font-semibold sm:text-4xl" style={{ fontFamily: displayFont }}>
+            {party.name}
+          </h1>
         </>
       ) : (
         <div className="py-16">
           <p className="text-lg opacity-70">Welcome to</p>
-          <h1 className="mt-2 text-4xl font-bold sm:text-6xl">{party.name}</h1>
+          <h1
+            className="mt-2 text-4xl font-bold sm:text-6xl"
+            style={{ fontFamily: displayFont }}
+          >
+            {party.name}
+          </h1>
           <p className="mt-6 text-base opacity-70">
             The party will begin shortly.
           </p>
@@ -87,17 +103,32 @@ function GameStage({
   game,
   interactive,
   onReveal,
+  displayFont,
 }: {
   game: Game;
   interactive: boolean;
   onReveal?: (next: GameData) => void;
+  displayFont?: string;
 }) {
   const { data } = game;
-  if (data.type === "bringme") return <BringMeStage data={data} />;
+  if (data.type === "bringme")
+    return <BringMeStage data={data} displayFont={displayFont} />;
   if (data.type === "feud")
-    return <FeudStage data={data} interactive={interactive} onReveal={onReveal} />;
+    return (
+      <FeudStage
+        data={data}
+        interactive={interactive}
+        onReveal={onReveal}
+        displayFont={displayFont}
+      />
+    );
   return (
-    <JeopardyStage data={data} interactive={interactive} onReveal={onReveal} />
+    <JeopardyStage
+      data={data}
+      interactive={interactive}
+      onReveal={onReveal}
+      displayFont={displayFont}
+    />
   );
 }
 
@@ -107,8 +138,10 @@ function GameStage({
 
 function BringMeStage({
   data,
+  displayFont,
 }: {
   data: Extract<GameData, { type: "bringme" }>;
+  displayFont?: string;
 }) {
   const current = data.challenges[data.currentIndex];
   return (
@@ -116,7 +149,10 @@ function BringMeStage({
       <p className="text-lg font-medium uppercase tracking-widest opacity-70">
         Bring me…
       </p>
-      <p className="mx-auto mt-6 max-w-3xl text-4xl font-bold leading-tight sm:text-6xl text-balance">
+      <p
+        className="mx-auto mt-6 max-w-3xl text-4xl font-bold leading-tight sm:text-6xl text-balance"
+        style={{ fontFamily: displayFont }}
+      >
         {current ? current.text : "No challenges yet"}
       </p>
       {data.challenges.length > 1 && (
@@ -136,10 +172,12 @@ function FeudStage({
   data,
   interactive,
   onReveal,
+  displayFont,
 }: {
   data: Extract<GameData, { type: "feud" }>;
   interactive: boolean;
   onReveal?: (next: GameData) => void;
+  displayFont?: string;
 }) {
   const index = Math.min(data.currentIndex, Math.max(data.questions.length - 1, 0));
   const current = data.questions[index];
@@ -169,7 +207,10 @@ function FeudStage({
 
   return (
     <div className="animate-fade-in">
-      <h2 className="mb-8 text-center text-2xl font-semibold sm:text-4xl text-balance">
+      <h2
+        className="mb-8 text-center text-2xl font-semibold sm:text-4xl text-balance"
+        style={{ fontFamily: displayFont }}
+      >
         {current.question}
       </h2>
       <ul className="mx-auto grid max-w-3xl gap-3">
@@ -228,10 +269,12 @@ function JeopardyStage({
   data,
   interactive,
   onReveal,
+  displayFont,
 }: {
   data: Extract<GameData, { type: "jeopardy" }>;
   interactive: boolean;
   onReveal?: (next: GameData) => void;
+  displayFont?: string;
 }) {
   const toggle = (categoryId: string, clueId: string) => {
     if (!interactive || !onReveal) return;
@@ -262,7 +305,10 @@ function JeopardyStage({
     >
       {data.categories.map((cat) => (
         <div key={cat.id} className="flex flex-col gap-3">
-          <div className="rounded-xl bg-[rgb(var(--button))] px-3 py-3 text-center text-sm font-bold uppercase tracking-wide text-white sm:text-base">
+          <div
+            className="rounded-xl bg-[rgb(var(--button))] px-3 py-3 text-center text-sm font-bold uppercase tracking-wide text-white sm:text-base"
+            style={{ fontFamily: displayFont }}
+          >
             {cat.name || "Category"}
           </div>
           {cat.clues.map((clue) => {
